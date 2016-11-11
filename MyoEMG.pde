@@ -134,7 +134,6 @@ private class Bluetooth {
     // wait for discovery response
     byte[] response = {};
     while (!endsWith(response, deviceID)) {
-      delay(125); // not sure why this is necessary
       response = readPacket();
     }
 
@@ -157,7 +156,6 @@ private class Bluetooth {
 
     // wait for connection response, and parse connection ID for future messages
     while (true) {
-      delay(125); // not sure why this is necessary
       response = readPacket();
       if (response[2] == 6 && response[3] == 3) {
         connectionID = response[response.length-1];
@@ -206,11 +204,6 @@ private class Bluetooth {
   }
 
   public byte[] readPacket() {
-    // Not sure why I need to delay here, but otherwise the program
-    // sporadically hangs. Does this have something to do with calling
-    // connection.available() with an empty serial buffer?
-    delay(10);
-
     byte messageType = 0;
     byte payloadSize = 0;
 
@@ -224,6 +217,9 @@ private class Bluetooth {
           payloadSize = (byte) connection.read();
           bytesRead++;
         }
+      } else {
+        // avoid burning processor
+        delay(1);
       }
     }
 
