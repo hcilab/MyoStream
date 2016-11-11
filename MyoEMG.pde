@@ -14,6 +14,12 @@ class MyoEMG {
     (byte)0x01, (byte)0x00, (byte)0x06, (byte)0xD5
   };
 
+  // the myo armband does not send a timestamp along with EMG data because of
+  // bandwidth constraints. However, we know that the the myo samples at a
+  // constant rate of 200 Hz. Therefore, we can estimate the time of the first
+  // same, and then calculate each subsequent sample time.
+  private long lastSampleTimeMillis;
+
   // each EMG packet received from the armband stores 2 sets of sensor
   // readings, measured 5 ms apart. This is a place to store the second sample
   // until it is requested.
@@ -46,6 +52,8 @@ class MyoEMG {
 
     // subscribe for notifications from 4 EMG data channels
     bt.writeAttributeByHandle(new byte[]{0x2c, 0x00}, new byte[]{0x01, 0x00});
+    lastSampleTimeMillis = System.currentTimeMillis(); // rough approximation
+
     bt.writeAttributeByHandle(new byte[]{0x2f, 0x00}, new byte[]{0x01, 0x00});
     bt.writeAttributeByHandle(new byte[]{0x32, 0x00}, new byte[]{0x01, 0x00});
     bt.writeAttributeByHandle(new byte[]{0x35, 0x00}, new byte[]{0x01, 0x00});
@@ -74,17 +82,21 @@ class MyoEMG {
   }
 
   private Sample processEMGPacket(byte[] packet) {
-    int[] sample1 = new int[8];
-    int[] sample2 = new int[8];
+    int[] sensorData1 = new int[8];
+    int[] sensorData2 = new int[8];
 
     for (int i=0; i<8; i++) {
-      sample1[i] = packet[i+9];
-      sample2[i] = packet[i+17];
+      sensorData1[i] = packet[i+9];
+      sensorData2[i] = packet[i+17];
     }
 
+    Sample s1 = new Sample(lastSampleTimeMillis+5, sensorData1);
+    Sample s2 = new Sample(lastSampleTimeMillis+10, sensorData2);
+    lastSampleTimeMillis += 10;
+
     // return the first sample, buffer the second
-    bufferedSample = new Sample(0, sample2);
-    return new Sample(0, sample1);
+    bufferedSample = s2;
+    return s1;
   }
 }
 

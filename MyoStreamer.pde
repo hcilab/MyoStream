@@ -16,7 +16,7 @@ void draw() {
 private void prettyPrint(Sample sample) {
   int[] data = sample.sensorData;
 
-  print("[");
+  print(sample.timestamp + ": [");
   for (int i=0; i<data.length; i++) {
     if (i < data.length -1)
       print(data[i] + " ");
