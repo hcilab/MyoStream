@@ -186,7 +186,7 @@ private class Bluetooth {
   }
 
   public void writeAttributeByHandle(byte[] handle, byte[] message) {
-    byte packetLength = (byte) (8+message.length);
+    int packetLength = 8+message.length;
     byte[] packet = new byte[packetLength];
 
     packet[0] = 0x00;
@@ -223,7 +223,7 @@ private class Bluetooth {
       }
     }
 
-    byte[] packet = new byte[4+payloadSize];
+    byte[] packet = new byte[4+Byte.toUnsignedInt(payloadSize)];
     packet[0] = messageType;
     packet[1] = payloadSize;
     while (bytesRead < packet.length) {
