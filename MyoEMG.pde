@@ -237,7 +237,7 @@ private class Bluetooth {
   private void write(byte[] message) {
     // When consecutive messages are written to quickly together, they seem to
     // be dropped/ignored by the Myo armband. Does this have something to do
-    // with the messaging window size in BLE?
+    // with the "connection interval" in BLE?
     delay(100);
     connection.write(message);
   }
