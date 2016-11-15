@@ -113,13 +113,27 @@ class Sample {
 
 
 private class Bluetooth {
+  final int BAUD_RATE = 256000;
+
+  // When attempting to auto-detect the myo dongle, a request for discovery
+  // messages is sent across each serial port prompting the armband to
+  // broadcast its identity. A port will be ruled-out after this duration of
+  // time.
+  final int DISCOVERY_TIMEOUT_MILLIS = 2000;
+
+  // During auto-detection, we cannot be sure that the port we are
+  // communicating across is connected to an armband, meaning that we may never
+  // receive a response. Give up trying to receive a packet after this
+  // duration of time.
+  final int PACKET_TIMEOUT_MILLIS = 50;
+
   Serial connection;
   byte connectionID = -1;
   byte[] deviceID;
 
 
   public Bluetooth(PApplet mainApp, String serialPort, byte[] deviceID) {
-    this.connection = new Serial(mainApp, serialPort, 256000);
+    this.connection = new Serial(mainApp, serialPort, BAUD_RATE);
     this.deviceID = deviceID;
   }
 
