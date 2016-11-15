@@ -224,12 +224,30 @@ private class Bluetooth {
     write(packet);
   }
 
+  // Attempt to read a bluetooth packet from the armband, hanging indefinitely
+  // until a packet is received.
+  //
   public byte[] readPacket() {
+    return readPacketOrTimeout(0);
+  }
+
+  // Attempt to read a bluetooth packet sent from the armband. Give up and
+  // return null after a timeout period. Note that after returning from a
+  // timeout, the serial stream is at an indeterminate location, and subsequent
+  // reads will not behave as expected.
+  //
+  private byte[] readPacketOrTimeout(int timeoutMillis) {
+    assert(serialConnection != null);
+
     byte messageType = 0;
     byte payloadSize = 0;
 
     int bytesRead = 0;
+    int startTime = millis();
     while (bytesRead < 2) {
+      if (timeoutMillis != 0 && millis() > startTime+timeoutMillis)
+        return null;
+
       if (serialConnection.available() > 0) {
         if (bytesRead == 0) {
           messageType = (byte) serialConnection.read();
@@ -248,6 +266,9 @@ private class Bluetooth {
     packet[0] = messageType;
     packet[1] = payloadSize;
     while (bytesRead < packet.length) {
+      if (timeoutMillis != 0 && millis() > startTime+timeoutMillis)
+        return null;
+
       if (serialConnection.available() > 0)
         packet[bytesRead++] = (byte) serialConnection.read();
     }
