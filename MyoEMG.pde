@@ -27,7 +27,7 @@ class MyoEMG {
 
 
   public MyoEMG(PApplet mainApp) {
-    this(mainApp, Serial.list()[0]);
+    this(mainApp, null);
   }
 
   public MyoEMG(PApplet mainApp, String serialPort) {
@@ -130,14 +130,21 @@ private class Bluetooth {
   Serial serialConnection;
   byte bluetoothConnectionID = -1;
   byte[] deviceID;
+  PApplet mainApp;
 
 
   public Bluetooth(PApplet mainApp, String serialPort, byte[] deviceID) {
-    this.serialConnection = new Serial(mainApp, serialPort, BAUD_RATE);
+    if (serialPort != null)
+      this.serialConnection = new Serial(mainApp, serialPort, BAUD_RATE);
+
+    this.mainApp = mainApp;
     this.deviceID = deviceID;
   }
 
   public void connect() {
+    if (serialConnection == null)
+      establishSerialConnection();
+
     // clean up any residue from previous runs
     disconnect();
 
@@ -246,6 +253,27 @@ private class Bluetooth {
     }
 
     return packet;
+  }
+
+  private void establishSerialConnection() {
+    for (String port : Serial.list()) {
+      serialConnection = new Serial(mainApp, port, BAUD_RATE);
+
+      // request discovery notifications, if this is the correct port, the armband should reply.
+      byte[] discoverMessage = {0x00, 0x01, 0x06, 0x02, 0x01};
+      write(discoverMessage);
+
+      // wait for discovery response until timeout
+      long startTime = millis();
+      while (millis() < startTime+DISCOVERY_TIMEOUT_MILLIS) {
+        if (endsWith(readPacket(), deviceID)) {
+          // found it, disable discovery notifications and return
+          byte[] endScanCommand = {0x00, 0x00, 0x06, 0x04};
+          write(endScanCommand);
+          return;
+        }
+      }
+    }
   }
 
   private void write(byte[] message) {
