@@ -189,6 +189,8 @@ private class Bluetooth {
   }
 
   public void disconnect() {
+    assert(serialConnection != null);
+
     // disable any active discovery broadcasting
     byte[] endScanCommand = {0x00, 0x00, 0x06, 0x04};
     write(endScanCommand);
@@ -210,6 +212,8 @@ private class Bluetooth {
   }
 
   public void writeAttributeByHandle(byte[] handle, byte[] message) {
+    assert(serialConnection != null);
+
     int packetLength = 8+message.length;
     byte[] packet = new byte[packetLength];
 
