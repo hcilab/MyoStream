@@ -1,7 +1,12 @@
 MyoEMG myoEmg;
 
 void setup() {
-  myoEmg = new MyoEMG(this);
+  try {
+    myoEmg = new MyoEMG(this);
+  } catch (MyoNotDetectectedError e) {
+    println("[Error] Myo armband not detected, exiting.");
+    System.exit(1);
+  }
 
   while (true)
     prettyPrint(myoEmg.readSample());

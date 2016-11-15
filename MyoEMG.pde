@@ -26,11 +26,11 @@ class MyoEMG {
   private Sample bufferedSample;
 
 
-  public MyoEMG(PApplet mainApp) {
+  public MyoEMG(PApplet mainApp) throws MyoNotDetectectedError {
     this(mainApp, null);
   }
 
-  public MyoEMG(PApplet mainApp, String serialPort) {
+  public MyoEMG(PApplet mainApp, String serialPort) throws MyoNotDetectectedError {
     bt = new Bluetooth(mainApp, serialPort, MYO_ID);
     bt.connect();
 
@@ -141,7 +141,7 @@ private class Bluetooth {
     this.deviceID = deviceID;
   }
 
-  public void connect() {
+  public void connect() throws MyoNotDetectectedError {
     if (serialConnection == null)
       establishSerialConnection();
 
@@ -152,9 +152,12 @@ private class Bluetooth {
     byte[] discoverMessage = {0x00, 0x01, 0x06, 0x02, 0x01};
     write(discoverMessage);
 
-    // wait for discovery response
+    // wait for discovery response until timeout
     byte[] response = {};
+    int startTime = millis();
     while (!endsWith(response, deviceID)) {
+      if (millis() > startTime+DISCOVERY_TIMEOUT_MILLIS)
+        throw(new MyoNotDetectectedError());
       response = readPacket();
     }
 
@@ -276,9 +279,15 @@ private class Bluetooth {
     return packet;
   }
 
-  private void establishSerialConnection() {
+  private void establishSerialConnection() throws MyoNotDetectectedError {
     for (String port : Serial.list()) {
-      serialConnection = new Serial(mainApp, port, BAUD_RATE);
+      try {
+        serialConnection = new Serial(mainApp, port, BAUD_RATE);
+      } catch (RuntimeException e) {
+        // if we experience any errors connecting to the serial port, it
+        // probably isn't the right one.
+        continue;
+      }
 
       // request discovery notifications, if this is the correct port, the armband should reply.
       byte[] discoverMessage = {0x00, 0x01, 0x06, 0x02, 0x01};
@@ -287,7 +296,8 @@ private class Bluetooth {
       // wait for discovery response until timeout
       long startTime = millis();
       while (millis() < startTime+DISCOVERY_TIMEOUT_MILLIS) {
-        if (endsWith(readPacket(), deviceID)) {
+        byte[] response = readPacketOrTimeout(PACKET_TIMEOUT_MILLIS);
+        if (response != null && endsWith(response, deviceID)) {
           // found it, disable discovery notifications and return
           byte[] endScanCommand = {0x00, 0x00, 0x06, 0x04};
           write(endScanCommand);
@@ -295,6 +305,9 @@ private class Bluetooth {
         }
       }
     }
+
+    // couldn't find a connected armband, abort
+    throw(new MyoNotDetectectedError());
   }
 
   private void write(byte[] message) {
@@ -317,3 +330,5 @@ private class Bluetooth {
     return true;
   }
 }
+
+class MyoNotDetectectedError extends Exception {}
