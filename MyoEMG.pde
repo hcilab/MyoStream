@@ -318,7 +318,7 @@ private class Bluetooth {
     // When consecutive messages are written to quickly together, they seem to
     // be dropped/ignored by the Myo armband. Does this have something to do
     // with the "connection interval" in BLE?
-    delay(100);
+    delay(200);
     serialConnection.write(message);
   }
 
