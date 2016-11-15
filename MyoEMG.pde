@@ -127,13 +127,13 @@ private class Bluetooth {
   // duration of time.
   final int PACKET_TIMEOUT_MILLIS = 50;
 
-  Serial connection;
-  byte connectionID = -1;
+  Serial serialConnection;
+  byte bluetoothConnectionID = -1;
   byte[] deviceID;
 
 
   public Bluetooth(PApplet mainApp, String serialPort, byte[] deviceID) {
-    this.connection = new Serial(mainApp, serialPort, BAUD_RATE);
+    this.serialConnection = new Serial(mainApp, serialPort, BAUD_RATE);
     this.deviceID = deviceID;
   }
 
@@ -172,7 +172,7 @@ private class Bluetooth {
     while (true) {
       response = readPacket();
       if (response[2] == 6 && response[3] == 3) {
-        connectionID = response[response.length-1];
+        bluetoothConnectionID = response[response.length-1];
         break;
       }
     }
@@ -183,8 +183,8 @@ private class Bluetooth {
     byte[] endScanCommand = {0x00, 0x00, 0x06, 0x04};
     write(endScanCommand);
 
-    if (connectionID > -1) {
-      byte[] disconnectMessage = {0x00, 0x01, 0x03, 0x00, connectionID};
+    if (bluetoothConnectionID > -1) {
+      byte[] disconnectMessage = {0x00, 0x01, 0x03, 0x00, bluetoothConnectionID};
       write(disconnectMessage);
     } else {
       // if no active connection, just brute force it to clean up any rogue connections
@@ -196,7 +196,7 @@ private class Bluetooth {
       write(disconnectMessage2);
     }
 
-    connectionID = -1;
+    bluetoothConnectionID = -1;
   }
 
   public void writeAttributeByHandle(byte[] handle, byte[] message) {
@@ -207,7 +207,7 @@ private class Bluetooth {
     packet[1] = (byte) (packetLength-4);
     packet[2] = 0x04;
     packet[3] = 0x06;
-    packet[4] = connectionID;
+    packet[4] = bluetoothConnectionID;
     packet[5] = handle[0];
     packet[6] = handle[1];
     packet[7] = (byte) message.length;
@@ -223,12 +223,12 @@ private class Bluetooth {
 
     int bytesRead = 0;
     while (bytesRead < 2) {
-      if (connection.available() > 0) {
+      if (serialConnection.available() > 0) {
         if (bytesRead == 0) {
-          messageType = (byte) connection.read();
+          messageType = (byte) serialConnection.read();
           bytesRead++;
         } else if (bytesRead == 1) {
-          payloadSize = (byte) connection.read();
+          payloadSize = (byte) serialConnection.read();
           bytesRead++;
         }
       } else {
@@ -241,8 +241,8 @@ private class Bluetooth {
     packet[0] = messageType;
     packet[1] = payloadSize;
     while (bytesRead < packet.length) {
-      if (connection.available() > 0)
-        packet[bytesRead++] = (byte) connection.read();
+      if (serialConnection.available() > 0)
+        packet[bytesRead++] = (byte) serialConnection.read();
     }
 
     return packet;
@@ -253,7 +253,7 @@ private class Bluetooth {
     // be dropped/ignored by the Myo armband. Does this have something to do
     // with the "connection interval" in BLE?
     delay(100);
-    connection.write(message);
+    serialConnection.write(message);
   }
 
   private boolean endsWith(byte[] message, byte[] suffix) {
