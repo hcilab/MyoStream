@@ -1,7 +1,7 @@
 import processing.serial.*;
 
 
-class MyoEMG {
+class LibMyoStream {
   private Bluetooth bt;
 
   // 128 bit string that identifies a BLE device as a Myo Armband.  This ID is
@@ -26,11 +26,11 @@ class MyoEMG {
   private Sample bufferedSample;
 
 
-  public MyoEMG(PApplet mainApp) throws MyoNotDetectectedError {
+  public LibMyoStream(PApplet mainApp) throws MyoNotDetectectedError {
     this(mainApp, null);
   }
 
-  public MyoEMG(PApplet mainApp, String serialPort) throws MyoNotDetectectedError {
+  public LibMyoStream(PApplet mainApp, String serialPort) throws MyoNotDetectectedError {
     bt = new Bluetooth(mainApp, serialPort, MYO_ID);
     bt.connect();
 

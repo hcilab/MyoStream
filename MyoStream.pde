@@ -1,15 +1,15 @@
-MyoEMG myoEmg;
+LibMyoStream myoStream;
 
 void setup() {
   try {
-    myoEmg = new MyoEMG(this);
+    myoStream = new LibMyoStream(this);
   } catch (MyoNotDetectectedError e) {
     println("[Error] Myo armband not detected, exiting.");
     System.exit(1);
   }
 
   while (true)
-    prettyPrint(myoEmg.readSample());
+    prettyPrint(myoStream.readSample());
 }
 
 
