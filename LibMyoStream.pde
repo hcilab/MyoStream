@@ -113,7 +113,7 @@ class Sample {
 
 
 private class Bluetooth {
-  final int BAUD_RATE = 256000;
+  final int BAUD_RATE = 9600;
 
   // When attempting to auto-detect the myo dongle, a request for discovery
   // messages is sent across each serial port prompting the armband to
